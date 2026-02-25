@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance System</title>
+</head>
+<body>
+  <h2>Attendance Check</h2>
+  <input type="text" id="phone" placeholder="Enter phone number">
+  <button onclick="submitAttendance()">Submit</button>
+
+  <p id="message"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+const supabaseUrl = "YOUR_SUPABASE_URL";
+const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function submitAttendance() {
+  const phone = document.getElementById("phone").value;
+
+  const { data: existing } = await supabase
+    .from("attendance")
+    .select("*")
+    .eq("phone", phone)
+    .is("check_out", null)
+    .single();
+
+  if (!existing) {
+    await supabase.from("attendance").insert({
+      phone: phone,
+      check_in: new Date()
+    });
+    document.getElementById("message").innerText = "Checked In";
+  } else {
+    await supabase.from("attendance")
+      .update({ check_out: new Date() })
+      .eq("id", existing.id);
+    document.getElementById("message").innerText = "Checked Out";
+  }
+}
+</script>
+</body>
+</html>
