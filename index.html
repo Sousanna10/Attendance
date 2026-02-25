@@ -1,14 +1,18 @@
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 const supabaseUrl = "https://kftyyyacxlxaghxwftxd.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdHl5eWFjeGx4YWdoeHdmdHhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTk5MDksImV4cCI6MjA4NzU5NTkwOX0._kaIiALNA2-K0lFf1AJcX-0X2lmxF1c15sUDJAKes3I";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-window.submitAttendance = async function () {
+async function submitAttendance() {
   const phone = document.getElementById("phone").value;
 
-  const { data: existing } = await supabase
+  if (!phone) {
+    document.getElementById("message").innerText = "Enter phone number";
+    return;
+  }
+
+  const { data: existing } = await supabaseClient
     .from("attendance")
     .select("*")
     .eq("phone", phone)
@@ -16,17 +20,17 @@ window.submitAttendance = async function () {
     .maybeSingle();
 
   if (!existing) {
-    await supabase.from("attendance").insert({
+    await supabaseClient.from("attendance").insert({
       phone: phone,
       check_in: new Date()
     });
     document.getElementById("message").innerText = "Checked In";
   } else {
-    await supabase
+    await supabaseClient
       .from("attendance")
       .update({ check_out: new Date() })
       .eq("id", existing.id);
     document.getElementById("message").innerText = "Checked Out";
   }
-};
+}
 </script>
