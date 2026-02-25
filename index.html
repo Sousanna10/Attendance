@@ -1,10 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Check</title>
+</head>
+<body>
+
+<h2>Attendance Check</h2>
+
+<input type="text" id="phone" placeholder="Enter phone number">
+<button id="submitBtn">Submit</button>
+
+<p id="message"></p>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
 const supabaseUrl = "https://kftyyyacxlxaghxwftxd.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdHl5eWFjeGx4YWdoeHdmdHhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTk5MDksImV4cCI6MjA4NzU5NTkwOX0._kaIiALNA2-K0lFf1AJcX-0X2lmxF1c15sUDJAKes3I";
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-async function submitAttendance() {
+const supabaseClient = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+
   const phone = document.getElementById("phone").value;
 
   if (!phone) {
@@ -12,25 +32,49 @@ async function submitAttendance() {
     return;
   }
 
-  const { data: existing } = await supabaseClient
+  const { data: existing, error } = await supabaseClient
     .from("attendance")
     .select("*")
     .eq("phone", phone)
     .is("check_out", null)
     .maybeSingle();
 
+  if (error) {
+    document.getElementById("message").innerText = error.message;
+    return;
+  }
+
   if (!existing) {
-    await supabaseClient.from("attendance").insert({
-      phone: phone,
-      check_in: new Date()
-    });
+    const { error: insertError } = await supabaseClient
+      .from("attendance")
+      .insert({
+        phone: phone,
+        check_in: new Date()
+      });
+
+    if (insertError) {
+      document.getElementById("message").innerText = insertError.message;
+      return;
+    }
+
     document.getElementById("message").innerText = "Checked In";
   } else {
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from("attendance")
       .update({ check_out: new Date() })
       .eq("id", existing.id);
+
+    if (updateError) {
+      document.getElementById("message").innerText = updateError.message;
+      return;
+    }
+
     document.getElementById("message").innerText = "Checked Out";
   }
-}
+
+});
+
 </script>
+
+</body>
+</html>
